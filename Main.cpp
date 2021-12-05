@@ -16,7 +16,7 @@
 #include <iostream>
 #include "Windows.h"
 #include "MMSystem.h"
-#include "shobjidl.h"
+#include <string>
 
 #define MAX_LOADSTRING 200
 
@@ -35,13 +35,18 @@ LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void 				ColorPixel(char* imgBuf, int w, int h, int x, int y);
 void				DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2);
 
+int trackbar1Pos = 0, trackbar2Pos = 0; //video timeline
+char* newFramePath1 = new char[_MAX_PATH];
+char* newFramePath2 = new char[_MAX_PATH];
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine,
-                     int       nCmdShow)
-{
+					 HINSTANCE hPrevInstance,
+					 LPSTR     lpCmdLine,
+					 int       nCmdShow) {
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+
 	MSG msg;
 	HACCEL hAccelTable;
 
@@ -52,69 +57,67 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	sscanf(lpCmdLine, "%s %d %d %s", &ImagePath, &w, &h, &SoundPath);
 	inImage.setWidth(w);
 	inImage.setHeight(h);
-	if (strstr(ImagePath, ".rgb") == NULL)
-	{
+	outImage.setWidth(w);
+	outImage.setHeight(h);
+	if (strstr(ImagePath, ".rgb") == NULL) {
 		AfxMessageBox("Image has to be a '.rgb' file\nUsage - Image.exe image.rgb w h sound.wav");
 		//return FALSE;
 	}
-	else
-	{
+	else {
 		inImage.setImagePath(ImagePath);
-		if (!inImage.ReadImage())
-		{
+		if (!inImage.ReadImage()) {
 			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h sound.wav");
-			//return FALSE;
 		}
 		else
-			outImage = inImage;
+			strcpy(newFramePath1, inImage.getImagePath());
+		
+		outImage.setImagePath("AIFilmTwo\\AIFilmTwo0001.rgb");
+		if (!outImage.ReadImage()) {
+			AfxMessageBox("Could not read right image");
+		}
+		else		
+			strcpy(newFramePath2, outImage.getImagePath());
 	}
-
+	
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_IMAGE, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
-	if (!InitInstance (hInstance, nCmdShow)) 
-	{
+	if (!InitInstance(hInstance, nCmdShow)) {
 		return FALSE;
 	}
 
 	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_IMAGE);
 
 	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0)) 
-	{
-		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) 
-		{
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}
-
+	
 	return msg.wParam;
 }
 
 // Colors a pixel at the given (x, y) position black.
-void ColorPixel(char* imgBuf, int w, int h, int x, int y)
-{
-	imgBuf[(4 * y * w) +  4 * x] = 0;
-	imgBuf[(4 * y * w) +  4 * x + 1] = 0;
-	imgBuf[(4 * y * w) +  4 * x + 2] = 0;
+void ColorPixel(char* imgBuf, int w, int h, int x, int y) {
+	imgBuf[(4 * y * w) + 4 * x] = 0;
+	imgBuf[(4 * y * w) + 4 * x + 1] = 0;
+	imgBuf[(4 * y * w) + 4 * x + 2] = 0;
 }
 
 // Draws a line using Bresenham's algorithm.
-void DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2)
-{
+void DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2) {
 	const bool steep = (abs(y2 - y1) > abs(x2 - x1));
-	if (steep)
-	{
+	if (steep) {
 		std::swap(x1, y1);
 		std::swap(x2, y2);
 	}
 
-	if (x1 > x2)
-	{
+	if (x1 > x2) {
 		std::swap(x1, x2);
 		std::swap(y1, y2);
 	}
@@ -128,20 +131,16 @@ void DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2)
 
 	const int maxX = (int)x2;
 
-	for (int x = (int)x1; x<maxX; x++)
-	{
-		if (steep)
-		{
+	for (int x = (int)x1; x < maxX; x++) {
+		if (steep) {
 			ColorPixel(imgBuf, w, h, y, x);
 		}
-		else
-		{
+		else {
 			ColorPixel(imgBuf, w, h, x, y);
 		}
 
 		error -= dy;
-		if (error < 0)
-		{
+		if (error < 0) {
 			y += ystep;
 			error += dx;
 		}
@@ -162,23 +161,22 @@ void DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2)
 //    so that the application will get 'well formed' small icons associated
 //    with it.
 //
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
+ATOM MyRegisterClass(HINSTANCE hInstance) {
 	WNDCLASSEX wcex;
 
-	wcex.cbSize = sizeof(WNDCLASSEX); 
+	wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= (WNDPROC)WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, (LPCTSTR)IDI_IMAGE);
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= (LPCSTR)IDC_IMAGE;
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = (WNDPROC)WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = LoadIcon(hInstance, (LPCTSTR)IDI_IMAGE);
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = (LPCSTR)IDC_IMAGE;
+	wcex.lpszClassName = szWindowClass;
+	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 
 	return RegisterClassEx(&wcex);
 }
@@ -194,29 +192,76 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   HWND hWnd;
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
+	HWND hWnd;
 
-   hInst = hInstance; // Store instance handle in our global variable
+	hInst = hInstance; // Store instance handle in our global variable
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+						CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-   
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+	if (!hWnd) {
+		return FALSE;
+	}
 
-   return TRUE;
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
+
+	return TRUE;
 }
 
-//file dialog
-void openFile(HWND hWnd) {
+// CreateTrackbar - creates and initializes a trackbar. 
+// 
+// Global variable
+//     g_hinst - instance handle
+//
+HWND WINAPI CreateTrackbar(
+	HWND hwndDlg,  // handle of dialog box (parent window) 
+	UINT iMin,     // minimum value in trackbar range 
+	UINT iMax,     // maximum value in trackbar range 
+	UINT iSelMin,  // minimum value in trackbar selection 
+	UINT iSelMax, // maximum value in trackbar selection 
+	UINT positionX,
+	UINT positionY,
+	UINT trackbarID)  
+{
 
+	InitCommonControls(); // loads common control's DLL 
+
+	HWND hwndTrack = CreateWindowEx(
+		0,                               // no extended styles 
+		TRACKBAR_CLASS,                  // class name 
+		"Trackbar Control",              // title (caption) 
+		WS_CHILD |
+		WS_VISIBLE |
+		TBS_NOTICKS |
+		TBS_ENABLESELRANGE,              // style 
+		positionX, positionY,                          // position 
+		300, 30,                         // size 
+		hwndDlg,                         // parent window 
+		(HMENU)trackbarID,                     // control identifier 
+		NULL,                         // instance 
+		NULL                             // no WM_CREATE parameter 
+	);
+
+	SendMessage(hwndTrack, TBM_SETRANGE,
+				(WPARAM)TRUE,                   // redraw flag 
+				(LPARAM)MAKELONG(iMin, iMax));  // min. & max. positions
+
+	SendMessage(hwndTrack, TBM_SETPAGESIZE,
+				0, (LPARAM)4);                  // new page size 
+
+	SendMessage(hwndTrack, TBM_SETSEL,
+				(WPARAM)FALSE,                  // redraw flag 
+				(LPARAM)MAKELONG(iSelMin, iSelMax));
+
+	SendMessage(hwndTrack, TBM_SETPOS,
+				(WPARAM)TRUE,                   // redraw flag 
+				(LPARAM)iSelMin);
+
+	SetFocus(hwndTrack);
+
+	return hwndTrack;
 }
 
 //
@@ -229,10 +274,9 @@ void openFile(HWND hWnd) {
 //  WM_DESTROY	- post a quit message and return
 //
 //
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-// TO DO: part useful to render video frames, may place your own code here in this function
-// You are free to change the following code in any way in order to display the video
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	// TO DO: part useful to render video frames, may place your own code here in this function
+	// You are free to change the following code in any way in order to display the video
 
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
@@ -242,94 +286,127 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	RECT rt;
 	GetClientRect(hWnd, &rt);
 
-	switch (message) 
-	{
-		case WM_COMMAND:
-			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
-			// Parse the menu selections:
-			switch (wmId)
-			{
-				case IDM_ABOUT:
-				   DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
-				   break;
-				case ID_READ_LEFT_VIDEO:
-					openFile(hWnd);
-					break;
-				case ID_READ_RIGHT_VIDEO:
-					
-					break; 
-				case ID_MODIFY_IMAGE:
-				   PlaySound(TEXT(SoundPath), NULL, SND_ASYNC);			// New addition to the code to play a wav file
-				   outImage.Modify();
-				   InvalidateRect(hWnd, &rt, false); 
-				   break;
-				case IDM_EXIT:
-				   DestroyWindow(hWnd);
-				   break;
-				default:
-				   return DefWindowProc(hWnd, message, wParam, lParam);
-			}
+	int length1, length2;
+	std::string pos1, pos2;
+
+	switch (message) {
+	case WM_CREATE:
+		CreateTrackbar(hWnd, 1, 9000, 1, 9000, 10, 400, ID_TRACKBAR1);
+		CreateTrackbar(hWnd, 1, 9000, 1, 9000, outImage.getWidth() + 60, 400, ID_TRACKBAR2);
+		break;
+	case WM_HSCROLL:
+		trackbar1Pos = SendMessage(GetDlgItem(hWnd, ID_TRACKBAR1), TBM_GETPOS, 0, 0);
+		trackbar2Pos = SendMessage(GetDlgItem(hWnd, ID_TRACKBAR2), TBM_GETPOS, 0, 0);
+
+		length1 = strlen(inImage.getImagePath());
+		length2 = strlen(outImage.getImagePath());
+		strcpy(newFramePath1, inImage.getImagePath());
+		strcpy(newFramePath2, outImage.getImagePath());
+		pos1 = std::to_string(trackbar1Pos);
+		pos2 = std::to_string(trackbar2Pos);
+		while (pos1.size() < 4)
+			pos1 = "0" + pos1;
+		while (pos2.size() < 4)
+			pos2 = "0" + pos2;
+		for (int i = 0; i < 4; i++) {
+			newFramePath1[length1 - 8 + i] = pos1[i];
+			newFramePath2[length2 - 8 + i] = pos2[i];
+		}
+
+		inImage.setImagePath(newFramePath1);
+		if (!inImage.ReadImage())
+			AfxMessageBox("Could not read left image");
+
+		outImage.setImagePath(newFramePath2);
+		if (!outImage.ReadImage())
+			AfxMessageBox("Could not read right image");
+
+		RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		break;
+	case WM_COMMAND:
+		wmId = LOWORD(wParam);
+		wmEvent = HIWORD(wParam);
+		// Parse the menu selections:
+		switch (wmId) {
+		case IDM_ABOUT:
+			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
 			break;
-		case WM_PAINT:
-			{
-				hdc = BeginPaint(hWnd, &ps);
-				// TO DO: Add any drawing code here...
-				char text[1000];
-				strcpy(text, "Original image (Left)  Image after modification (Right)\n");
-				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-				strcpy(text, "\nUpdate program with your code to modify input image");
-				DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
-
-				BITMAPINFO bmi;
-				CBitmap bitmap;
-				memset(&bmi,0,sizeof(bmi));
-				bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-				bmi.bmiHeader.biWidth = inImage.getWidth();
-				bmi.bmiHeader.biHeight = -inImage.getHeight();  // Use negative height.  DIB is top-down.
-				bmi.bmiHeader.biPlanes = 1;
-				bmi.bmiHeader.biBitCount = 32;
-				bmi.bmiHeader.biCompression = BI_RGB;
-				bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
-
-				SetDIBitsToDevice(hdc,
-								  0,100,inImage.getWidth(),inImage.getHeight(),
-								  0,0,0,inImage.getHeight(),
-								  inImage.getImageData(),&bmi,DIB_RGB_COLORS);
-
-				SetDIBitsToDevice(hdc,
-								  outImage.getWidth()+50,100,outImage.getWidth(),outImage.getHeight(),
-								  0,0,0,outImage.getHeight(),
-								  outImage.getImageData(),&bmi,DIB_RGB_COLORS);
-
-
-				EndPaint(hWnd, &ps);
-			}
+		case ID_READ_LEFT_VIDEO:
 			break;
-		case WM_DESTROY:
-			PostQuitMessage(0);
+		case ID_READ_RIGHT_VIDEO:
+			//RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+			break;
+		case ID_MODIFY_IMAGE:
+			PlaySound(TEXT(SoundPath), NULL, SND_ASYNC);			// New addition to the code to play a wav file
+			outImage.Modify();
+			InvalidateRect(hWnd, &rt, false);
+			break;
+		case IDM_EXIT:
+			DestroyWindow(hWnd);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
-   }
-   return 0;
+		}
+		break;
+	case WM_PAINT:
+	{
+		hdc = BeginPaint(hWnd, &ps);
+		// TO DO: Add any drawing code here...
+		char text[1000];
+		//strcpy(text, "Original image (Left)  Image after modification (Right)\n");
+		//strcpy(text, "\nUpdate program with your code to modify input image");
+		strcpy(text, newFramePath1);
+		DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
+		rt.top = 30;
+		strcpy(text, newFramePath2);
+		DrawText(hdc, text, strlen(text), &rt, DT_LEFT);
+
+		BITMAPINFO bmi;
+		CBitmap bitmap;
+		memset(&bmi, 0, sizeof(bmi));
+		bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+		bmi.bmiHeader.biWidth = inImage.getWidth();
+		bmi.bmiHeader.biHeight = -inImage.getHeight();  // Use negative height.  DIB is top-down.
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biSizeImage = inImage.getWidth() * inImage.getHeight();
+
+		SetDIBitsToDevice(hdc,
+						  0, 100, inImage.getWidth(), inImage.getHeight(),
+						  0, 0, 0, inImage.getHeight(),
+						  inImage.getImageData(), &bmi, DIB_RGB_COLORS);
+
+		SetDIBitsToDevice(hdc,
+						  outImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
+						  0, 0, 0, outImage.getHeight(),
+						  outImage.getImageData(), &bmi, DIB_RGB_COLORS);
+
+
+		EndPaint(hWnd, &ps);
+	}
+	break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
 }
 
 // Mesage handler for about box.
-LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-		case WM_INITDIALOG:
-				return TRUE;
+LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_INITDIALOG:
+		return TRUE;
 
-		case WM_COMMAND:
-			if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) 
-			{
-				EndDialog(hDlg, LOWORD(wParam));
-				return TRUE;
-			}
-			break;
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+		break;
 	}
-    return FALSE;
+	return FALSE;
 }

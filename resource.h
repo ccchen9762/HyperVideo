@@ -19,6 +19,9 @@
 #define ID_READ_LEFT_VIDEO			32773
 #define ID_READ_RIGHT_VIDEO			32774
 
+#define ID_TRACKBAR1  3
+#define ID_TRACKBAR2  4
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

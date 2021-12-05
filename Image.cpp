@@ -19,7 +19,7 @@ MyImage::MyImage() {
 
 MyImage::~MyImage() {
 	if (Data)
-		delete Data;
+		delete[] Data;
 }
 
 // Copy constructor
@@ -41,7 +41,7 @@ MyImage& MyImage::operator= (const MyImage& otherImage) {
 	Height = otherImage.Height;
 	Width = otherImage.Width;
 	Data = new char[Width * Height * 4];
-	strcpy((char*)otherImage.ImagePath, ImagePath);
+	strcpy(ImagePath, (char*)otherImage.ImagePath);
 
 	for (int i = 0; i < (Height * Width * 4); i++) {
 		Data[i] = otherImage.Data[i];
@@ -96,9 +96,9 @@ bool MyImage::ReadImage() {
 	}
 
 	// Clean up and return
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
+	delete[] Rbuf;
+	delete[] Gbuf;
+	delete[] Bbuf;
 	fclose(IN_FILE);
 
 	return true;
@@ -147,9 +147,9 @@ bool MyImage::WriteImage() {
 	}
 
 	// Clean up and return
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
+	delete[] Rbuf;
+	delete[] Gbuf;
+	delete[] Bbuf;
 	fclose(OUT_FILE);
 
 	return true;
