@@ -22,6 +22,7 @@
 
 // Global Variables:
 MyImage			inImage, outImage;				// image objects
+MyImage			originIn, originOut;
 char			SoundPath[_MAX_PATH];			// sound wav file
 HINSTANCE		hInst;							// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
@@ -35,17 +36,31 @@ LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void 				ColorPixel(char* imgBuf, int w, int h, int x, int y);
 void				DrawLine(char* imgBuf, int w, int h, int x1, int y1, int x2, int y2);
 
-int trackbar1Pos = 0, trackbar2Pos = 0; //video timeline
+int trackbar1Pos = 1, trackbar2Pos = 1; //video timeline
 char* newFramePath1 = new char[_MAX_PATH];
 char* newFramePath2 = new char[_MAX_PATH];
+
+int startX = 0, startY = 0, endX = 0, endY = 0;
+int boxB = 0, boxG = 0, boxR = 0;
+
+std::string hyperlink = "";
+
+//different display modes
+enum class LCLICKSTATUS { LDOWN = 1, LUP = 2 };
+LCLICKSTATUS lclickStatus = LCLICKSTATUS::LUP;
+enum class RCLICKSTATUS { RDOWN = 1, RUP = 2 };
+RCLICKSTATUS rclickStatus = RCLICKSTATUS::RUP;
+
+enum class LINKSTATUS { NORMAL = 1, LINKING = 2 };
+LINKSTATUS linkStatus = LINKSTATUS::NORMAL;
 
 // Main entry point for a windows application
 int APIENTRY WinMain(HINSTANCE hInstance,
 					 HINSTANCE hPrevInstance,
 					 LPSTR     lpCmdLine,
 					 int       nCmdShow) {
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
 
 	MSG msg;
 	HACCEL hAccelTable;
@@ -59,7 +74,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	inImage.setHeight(h);
 	outImage.setWidth(w);
 	outImage.setHeight(h);
-	if (strstr(ImagePath, ".rgb") == NULL) {
+	strcpy(newFramePath1, "");
+	strcpy(newFramePath2, "");
+	/*if (strstr(ImagePath, ".rgb") == NULL) {
 		AfxMessageBox("Image has to be a '.rgb' file\nUsage - Image.exe image.rgb w h sound.wav");
 		//return FALSE;
 	}
@@ -68,17 +85,21 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		if (!inImage.ReadImage()) {
 			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h sound.wav");
 		}
-		else
+		else {
+			originIn = inImage;
 			strcpy(newFramePath1, inImage.getImagePath());
-		
+		}
 		outImage.setImagePath("AIFilmTwo\\AIFilmTwo0001.rgb");
 		if (!outImage.ReadImage()) {
 			AfxMessageBox("Could not read right image");
 		}
-		else		
+		else {
+			originOut = outImage;
 			strcpy(newFramePath2, outImage.getImagePath());
-	}
-	
+		}
+
+	}*/
+
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_IMAGE, szWindowClass, MAX_LOADSTRING);
@@ -98,7 +119,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-	
+
 	return msg.wParam;
 }
 
@@ -223,8 +244,7 @@ HWND WINAPI CreateTrackbar(
 	UINT iSelMax, // maximum value in trackbar selection 
 	UINT positionX,
 	UINT positionY,
-	UINT trackbarID)  
-{
+	UINT trackbarID) {
 
 	InitCommonControls(); // loads common control's DLL 
 
@@ -264,6 +284,46 @@ HWND WINAPI CreateTrackbar(
 	return hwndTrack;
 }
 
+void openFile(HWND hWnd, bool left) {
+	OPENFILENAME ofn;
+
+	char* fileName = new char[100];
+
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFile = fileName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = 100;
+	ofn.lpstrFilter = "Video files\0*0001.rgb";
+	ofn.nFilterIndex = 1;
+
+	GetOpenFileName(&ofn);
+
+	if (left) {
+		inImage.setImagePath(ofn.lpstrFile);
+		if (!inImage.ReadImage()) {
+			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h sound.wav");
+		}
+		else {
+			originIn = inImage;
+			strcpy(newFramePath1, inImage.getImagePath());
+		}
+	}
+	else {
+		outImage.setImagePath(ofn.lpstrFile);
+		if (!outImage.ReadImage()) {
+			AfxMessageBox("Could not read image\nUsage - Image.exe image.rgb w h sound.wav");
+		}
+		else {
+			originOut = outImage;
+			strcpy(newFramePath2, outImage.getImagePath());
+		}
+	}
+	
+}
+
 //
 //  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
 //
@@ -287,10 +347,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	GetClientRect(hWnd, &rt);
 
 	int length1, length2;
+	int mousePositionX, mousePositionY;
 	std::string pos1, pos2;
 
 	switch (message) {
 	case WM_CREATE:
+		CreateWindow(TEXT("button"), TEXT("select left video"),
+					 WS_VISIBLE | WS_CHILD,
+					 10, 60, 150, 25,
+					 hWnd, (HMENU)ID_BUTTONSELECTL, NULL, NULL);
+		CreateWindow(TEXT("button"), TEXT("select right video"),
+					 WS_VISIBLE | WS_CHILD,
+					 180, 60, 150, 25,
+					 hWnd, (HMENU)ID_BUTTONSELECTR, NULL, NULL);
+		CreateWindow(TEXT("button"), TEXT("create new link"),
+					 WS_VISIBLE | WS_CHILD,
+					 350, 60, 150, 25,
+					 hWnd, (HMENU)ID_BUTTONCREATE, NULL, NULL);
+		CreateWindow(TEXT("button"), TEXT("connect video"),
+					 WS_VISIBLE | WS_CHILD,
+					 520, 60, 150, 25,
+					 hWnd, (HMENU)ID_BUTTONCONNECT, NULL, NULL);
 		CreateTrackbar(hWnd, 1, 9000, 1, 9000, 10, 400, ID_TRACKBAR1);
 		CreateTrackbar(hWnd, 1, 9000, 1, 9000, outImage.getWidth() + 60, 400, ID_TRACKBAR2);
 		break;
@@ -316,10 +393,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		inImage.setImagePath(newFramePath1);
 		if (!inImage.ReadImage())
 			AfxMessageBox("Could not read left image");
+		else
+			originIn = inImage;
 
 		outImage.setImagePath(newFramePath2);
 		if (!outImage.ReadImage())
 			AfxMessageBox("Could not read right image");
+		else
+			originOut = outImage;
 
 		RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 		break;
@@ -328,13 +409,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		wmEvent = HIWORD(wParam);
 		// Parse the menu selections:
 		switch (wmId) {
+		case ID_BUTTONSELECTL:
+			openFile(hWnd, true);
+			//RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+			InvalidateRect(hWnd, &rt, false);
+			break;
+		case ID_BUTTONSELECTR:
+			openFile(hWnd, false);
+			//RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+			InvalidateRect(hWnd, &rt, false);
+			break;
+		case ID_BUTTONCREATE:
+			linkStatus = LINKSTATUS::LINKING;
+			srand(time(NULL));
+			boxB = rand() % 205 + 50, boxG = rand() % 205 + 50, boxR = rand() % 205 + 50; //randomize bounding box color
+			break;
+		case ID_BUTTONCONNECT:
+			hyperlink += std::to_string(trackbar1Pos) + " " + std::to_string(trackbar2Pos);
+			hyperlink += " " + std::to_string(startX) + " " + std::to_string(startY);
+			hyperlink += " " + std::to_string(endX) + " " + std::to_string(endY);
+			std::cout << hyperlink << std::endl;
+			hyperlink = ""; //reset
+			originIn = inImage;
+			linkStatus = LINKSTATUS::NORMAL;
+			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
-			break;
-		case ID_READ_LEFT_VIDEO:
-			break;
-		case ID_READ_RIGHT_VIDEO:
-			//RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 			break;
 		case ID_MODIFY_IMAGE:
 			PlaySound(TEXT(SoundPath), NULL, SND_ASYNC);			// New addition to the code to play a wav file
@@ -347,6 +447,93 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
+		break;
+	case WM_LBUTTONDOWN:
+		mousePositionX = GET_X_LPARAM(lParam);
+		mousePositionY = GET_Y_LPARAM(lParam);
+
+		if (linkStatus == LINKSTATUS::LINKING) {
+			if (mousePositionX >= 0 && mousePositionX < 0 + inImage.getWidth() &&
+				mousePositionY >= 100 && mousePositionY < 100 + inImage.getHeight()) {		// click on left video
+				startX = mousePositionX, startY = mousePositionY - 100;
+				lclickStatus = LCLICKSTATUS::LDOWN;
+			}
+			else if (mousePositionX >= 50 + inImage.getWidth() && mousePositionX < 50 + inImage.getWidth() + outImage.getWidth() &&
+					 mousePositionY >= 100 && mousePositionY < 100 + outImage.getHeight()) { // click on right video
+				startX = mousePositionX - 50 - inImage.getWidth(), startY = mousePositionY - 100;
+				rclickStatus = RCLICKSTATUS::RDOWN;
+			}
+
+			RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		}
+		break;
+	case WM_MOUSEMOVE:
+		// modifying bounding box
+		if (lclickStatus == LCLICKSTATUS::LDOWN) {
+			mousePositionX = LOWORD(lParam);
+			if (mousePositionX > 0 + inImage.getWidth())
+				mousePositionX = 0 + inImage.getWidth() - 1;
+			else if (mousePositionX < 0)
+				mousePositionX = 0;
+			mousePositionY = HIWORD(lParam);
+			if (mousePositionY > 100 + inImage.getHeight())
+				mousePositionY = 100 + inImage.getHeight() - 1;
+			else if (mousePositionY < 100)
+				mousePositionY = 100;
+			inImage = originIn;
+			inImage.TargetArea(startX, startY, mousePositionX, mousePositionY - 100, boxB, boxG, boxR);
+			RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		}
+		else if (rclickStatus == RCLICKSTATUS::RDOWN) {
+			mousePositionX = LOWORD(lParam);
+			if (mousePositionX > 50 + inImage.getWidth() + outImage.getWidth())
+				mousePositionX = 50 + inImage.getWidth() + outImage.getWidth() - 1;
+			else if (mousePositionX < 50 + inImage.getWidth())
+				mousePositionX = 50 + inImage.getWidth();
+			mousePositionY = HIWORD(lParam);
+			if (mousePositionY > 100 + outImage.getHeight())
+				mousePositionY = 100 + outImage.getHeight() - 1;
+			else if (mousePositionY < 100)
+				mousePositionY = 100;
+			outImage = originOut;
+			outImage.TargetArea(startX, startY, mousePositionX - 50 - inImage.getWidth(), mousePositionY - 100, boxB, boxG, boxR);
+			RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		}
+		break;
+	case WM_LBUTTONUP:
+		// get final bounding box coordinates
+		if (lclickStatus == LCLICKSTATUS::LDOWN) {
+			mousePositionX = LOWORD(lParam);
+			if (mousePositionX > 0 + inImage.getWidth())
+				mousePositionX = 0 + inImage.getWidth() - 1;
+			else if (mousePositionX < 0)
+				mousePositionX = 0;
+			mousePositionY = HIWORD(lParam);
+			if (mousePositionY > 100 + inImage.getHeight())
+				mousePositionY = 100 + inImage.getHeight() - 1;
+			else if (mousePositionY < 100)
+				mousePositionY = 100;
+
+			endX = mousePositionX, endY = mousePositionY;
+		}
+		else if (rclickStatus == RCLICKSTATUS::RDOWN) {
+			mousePositionX = LOWORD(lParam);
+			if (mousePositionX > 50 + inImage.getWidth() + outImage.getWidth())
+				mousePositionX = 50 + inImage.getWidth() + outImage.getWidth() - 1;
+			else if (mousePositionX < 50 + inImage.getWidth())
+				mousePositionX = 50 + inImage.getWidth();
+			mousePositionY = HIWORD(lParam);
+			if (mousePositionY > 100 + outImage.getHeight())
+				mousePositionY = 100 + outImage.getHeight() - 1;
+			else if (mousePositionY < 100)
+				mousePositionY = 100;
+
+			endX = mousePositionX, endY = mousePositionY;
+		}
+
+		lclickStatus = LCLICKSTATUS::LUP;
+		rclickStatus = RCLICKSTATUS::RUP;
+		RedrawWindow(hWnd, &rt, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 		break;
 	case WM_PAINT:
 	{
@@ -381,7 +568,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 						  outImage.getWidth() + 50, 100, outImage.getWidth(), outImage.getHeight(),
 						  0, 0, 0, outImage.getHeight(),
 						  outImage.getImageData(), &bmi, DIB_RGB_COLORS);
-
 
 		EndPaint(hWnd, &ps);
 	}

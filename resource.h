@@ -16,11 +16,12 @@
 #define ID_MODIFY_IMAGE                 32771
 #define ID_IMAGE_OPEN                   32772
 
-#define ID_READ_LEFT_VIDEO			32773
-#define ID_READ_RIGHT_VIDEO			32774
-
 #define ID_TRACKBAR1  3
 #define ID_TRACKBAR2  4
+#define ID_BUTTONSELECTL 5
+#define ID_BUTTONSELECTR 6
+#define ID_BUTTONCREATE 7
+#define ID_BUTTONCONNECT 8
 
 // Next default values for new objects
 // 

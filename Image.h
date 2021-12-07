@@ -62,6 +62,7 @@ public:
 	bool	WriteImage();
 
 	// Modifications
+	bool TargetArea(int x1, int y1, int x2, int y2, int b, int g, int r);
 	bool	Modify();
 
 };

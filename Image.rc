@@ -33,8 +33,6 @@ IDC_IMAGE MENU DISCARDABLE
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "Read Left Video",             ID_READ_LEFT_VIDEO
-        MENUITEM "Read Right Video",            ID_READ_RIGHT_VIDEO
         MENUITEM "Modify",                      ID_MODIFY_IMAGE
         MENUITEM "E&xit",                       IDM_EXIT
     END
