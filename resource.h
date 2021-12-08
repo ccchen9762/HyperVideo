@@ -22,6 +22,7 @@
 #define ID_BUTTONSELECTR 6
 #define ID_BUTTONCREATE 7
 #define ID_BUTTONCONNECT 8
+#define ID_BUTTONSAVEFILE 9
 
 // Next default values for new objects
 // 

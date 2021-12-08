@@ -17,6 +17,7 @@
 #include "Windows.h"
 #include "MMSystem.h"
 #include <string>
+#include <fstream>
 
 #define MAX_LOADSTRING 200
 
@@ -44,6 +45,8 @@ int startX = 0, startY = 0, endX = 0, endY = 0;
 int boxB = 0, boxG = 0, boxR = 0;
 
 std::string hyperlink = "";
+
+std::ofstream outputFile;
 
 //different display modes
 enum class LCLICKSTATUS { LDOWN = 1, LUP = 2 };
@@ -368,6 +371,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 					 WS_VISIBLE | WS_CHILD,
 					 520, 60, 150, 25,
 					 hWnd, (HMENU)ID_BUTTONCONNECT, NULL, NULL);
+		CreateWindow(TEXT("button"), TEXT("save file"),
+					 WS_VISIBLE | WS_CHILD,
+					 690, 60, 150, 25,
+					 hWnd, (HMENU)ID_BUTTONSAVEFILE, NULL, NULL);
 		CreateTrackbar(hWnd, 1, 9000, 1, 9000, 10, 400, ID_TRACKBAR1);
 		CreateTrackbar(hWnd, 1, 9000, 1, 9000, outImage.getWidth() + 60, 400, ID_TRACKBAR2);
 		break;
@@ -425,13 +432,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			boxB = rand() % 205 + 50, boxG = rand() % 205 + 50, boxR = rand() % 205 + 50; //randomize bounding box color
 			break;
 		case ID_BUTTONCONNECT:
-			hyperlink += std::to_string(trackbar1Pos) + " " + std::to_string(trackbar2Pos);
+			hyperlink += "\n" + std::to_string(trackbar1Pos) + " " + std::to_string(trackbar2Pos);
 			hyperlink += " " + std::to_string(startX) + " " + std::to_string(startY);
 			hyperlink += " " + std::to_string(endX) + " " + std::to_string(endY);
-			std::cout << hyperlink << std::endl;
-			hyperlink = ""; //reset
+			//std::cout << hyperlink << std::endl;
+			//hyperlink = ""; //reset
 			originIn = inImage;
 			linkStatus = LINKSTATUS::NORMAL;
+			break;
+		case ID_BUTTONSAVEFILE:
+			std::cout << "yes";
+			outputFile.open("hyperlink.txt");
+			outputFile << inImage.getImagePath();
+			outputFile << hyperlink;
+			outputFile.close();
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
