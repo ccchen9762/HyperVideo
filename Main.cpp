@@ -441,9 +441,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			linkStatus = LINKSTATUS::NORMAL;
 			break;
 		case ID_BUTTONSAVEFILE:
-			std::cout << "yes";
 			outputFile.open("hyperlink.txt");
-			outputFile << inImage.getImagePath();
+			//outputFile << inImage.getImagePath();
 			outputFile << hyperlink;
 			outputFile.close();
 			break;
