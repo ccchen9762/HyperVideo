@@ -234,52 +234,52 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 	return TRUE;
 }
 
-// CreateTrackbar - creates and initializes a trackbar. 
-// 
+// CreateTrackbar - creates and initializes a trackbar.
+//
 // Global variable
 //     g_hinst - instance handle
 //
 HWND WINAPI CreateTrackbar(
-	HWND hwndDlg,  // handle of dialog box (parent window) 
-	UINT iMin,     // minimum value in trackbar range 
-	UINT iMax,     // maximum value in trackbar range 
-	UINT iSelMin,  // minimum value in trackbar selection 
-	UINT iSelMax, // maximum value in trackbar selection 
+	HWND hwndDlg,  // handle of dialog box (parent window)
+	UINT iMin,     // minimum value in trackbar range
+	UINT iMax,     // maximum value in trackbar range
+	UINT iSelMin,  // minimum value in trackbar selection
+	UINT iSelMax, // maximum value in trackbar selection
 	UINT positionX,
 	UINT positionY,
 	UINT trackbarID) {
 
-	InitCommonControls(); // loads common control's DLL 
+	InitCommonControls(); // loads common control's DLL
 
 	HWND hwndTrack = CreateWindowEx(
-		0,                               // no extended styles 
-		TRACKBAR_CLASS,                  // class name 
-		"Trackbar Control",              // title (caption) 
+		0,                               // no extended styles
+		TRACKBAR_CLASS,                  // class name
+		"Trackbar Control",              // title (caption)
 		WS_CHILD |
 		WS_VISIBLE |
 		TBS_NOTICKS |
-		TBS_ENABLESELRANGE,              // style 
-		positionX, positionY,                          // position 
-		300, 30,                         // size 
-		hwndDlg,                         // parent window 
-		(HMENU)trackbarID,                     // control identifier 
-		NULL,                         // instance 
-		NULL                             // no WM_CREATE parameter 
+		TBS_ENABLESELRANGE,              // style
+		positionX, positionY,                          // position
+		300, 30,                         // size
+		hwndDlg,                         // parent window
+		(HMENU)trackbarID,                     // control identifier
+		NULL,                         // instance
+		NULL                             // no WM_CREATE parameter
 	);
 
 	SendMessage(hwndTrack, TBM_SETRANGE,
-				(WPARAM)TRUE,                   // redraw flag 
+				(WPARAM)TRUE,                   // redraw flag
 				(LPARAM)MAKELONG(iMin, iMax));  // min. & max. positions
 
 	SendMessage(hwndTrack, TBM_SETPAGESIZE,
-				0, (LPARAM)4);                  // new page size 
+				0, (LPARAM)4);                  // new page size
 
 	SendMessage(hwndTrack, TBM_SETSEL,
-				(WPARAM)FALSE,                  // redraw flag 
+				(WPARAM)FALSE,                  // redraw flag
 				(LPARAM)MAKELONG(iSelMin, iSelMax));
 
 	SendMessage(hwndTrack, TBM_SETPOS,
-				(WPARAM)TRUE,                   // redraw flag 
+				(WPARAM)TRUE,                   // redraw flag
 				(LPARAM)iSelMin);
 
 	SetFocus(hwndTrack);
@@ -324,7 +324,7 @@ void openFile(HWND hWnd, bool left) {
 			strcpy(newFramePath2, outImage.getImagePath());
 		}
 	}
-	
+
 }
 
 //
@@ -432,16 +432,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			boxB = rand() % 205 + 50, boxG = rand() % 205 + 50, boxR = rand() % 205 + 50; //randomize bounding box color
 			break;
 		case ID_BUTTONCONNECT:
-			hyperlink += "\n" + std::to_string(trackbar1Pos) + " " + std::to_string(trackbar2Pos);
+			hyperlink += std::to_string(trackbar1Pos) + " " + std::to_string(trackbar2Pos);
 			hyperlink += " " + std::to_string(startX) + " " + std::to_string(startY);
-			hyperlink += " " + std::to_string(endX) + " " + std::to_string(endY);
+			hyperlink += " " + std::to_string(endX) + " " + std::to_string(endY)+"\n";
 			//std::cout << hyperlink << std::endl;
 			//hyperlink = ""; //reset
 			originIn = inImage;
 			linkStatus = LINKSTATUS::NORMAL;
 			break;
 		case ID_BUTTONSAVEFILE:
-			outputFile.open("hyperlink.txt");
+			outputFile.open("../hyperlink.txt");
 			//outputFile << inImage.getImagePath();
 			outputFile << hyperlink;
 			outputFile.close();
