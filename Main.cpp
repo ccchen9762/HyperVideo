@@ -527,7 +527,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			else if (mousePositionY < 100)
 				mousePositionY = 100;
 
-			endX = mousePositionX, endY = mousePositionY;
+			endX = mousePositionX, endY = mousePositionY-100;
 		}
 		else if (rclickStatus == RCLICKSTATUS::RDOWN) {
 			mousePositionX = LOWORD(lParam);
@@ -541,7 +541,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			else if (mousePositionY < 100)
 				mousePositionY = 100;
 
-			endX = mousePositionX, endY = mousePositionY;
+			endX = mousePositionX-50-inImage.getWidth(), endY = mousePositionY-100;
 		}
 
 		lclickStatus = LCLICKSTATUS::LUP;
